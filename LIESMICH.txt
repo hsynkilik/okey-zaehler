@@ -1,0 +1,11 @@
+Okey Zähler: Web-App fürs iPhone
+
+1. Lege den Ordner online (HTTPS), zum Beispiel mit Netlify Drop (app.netlify.com/drop)
+   oder GitHub Pages. Alle fünf Dateien müssen im selben Ordner liegen.
+2. Öffne die Adresse in Safari auf dem iPhone.
+3. Tippe auf Teilen, dann Zum Home-Bildschirm.
+4. Öffne die App, tippe auf das Zahnrad und trage deinen Anthropic-API-Schlüssel ein.
+   Erstelle dafür in der Anthropic Console (console.anthropic.com/settings/keys)
+   einen eigenen Schlüssel und setze dort ein Ausgabenlimit.
+
+Der Schlüssel bleibt auf deinem Gerät und geht nur an api.anthropic.com.

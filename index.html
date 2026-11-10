@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Okey Zähler</title>
+<meta name="theme-color" content="#12301f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Okey Zähler">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+/* Layout: one narrow column like a card table. Felt-toned neutrals, ivory tiles are the only bright objects, brass is the action colour. */
+:root {
+  --bg: #e8eee8;
+  --surface: #f8faf7;
+  --surface-2: #dde7de;
+  --ink: #13201a;
+  --muted: #4f6257;
+  --line: #c3d0c5;
+  --accent: #8f5f0f;
+  --accent-ink: #ffffff;
+  --good: #12884a;
+  --warn: #c26a00;
+  --bad: #c62828;
+  --tile: #f6efdc;
+  --tile-edge: #cbbd98;
+  --t-red: #c8281e;
+  --t-yellow: #c98300;
+  --t-blue: #1d4fd0;
+  --t-black: #17181a;
+  --font-display: 'Avenir Next Condensed', 'Roboto Condensed', 'Arial Narrow', 'Helvetica Neue Condensed', Impact, sans-serif;
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1813;
+    --surface: #16241c;
+    --surface-2: #1e3226;
+    --ink: #e8f0ea;
+    --muted: #9bb0a2;
+    --line: #2b4032;
+    --accent: #e0b04f;
+    --accent-ink: #1a1203;
+    --good: #3ccf7d;
+    --warn: #f0a040;
+    --bad: #ff8a80;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1813;
+  --surface: #16241c;
+  --surface-2: #1e3226;
+  --ink: #e8f0ea;
+  --muted: #9bb0a2;
+  --line: #2b4032;
+  --accent: #e0b04f;
+  --accent-ink: #1a1203;
+  --good: #3ccf7d;
+  --warn: #f0a040;
+  --bad: #ff8a80;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.45;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.wrap {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 20px 16px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.gear {
+  flex: none; width: 44px; height: 44px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); cursor: pointer;
+}
+.gear svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 14px; font-weight: 600; }
+.field input[type="password"], .field input[type="text"] {
+  width: 100%; min-height: 46px; padding: 10px 12px; font: inherit; font-size: 16px;
+  color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 10px;
+}
+.hint { margin: 0; font-size: 13px; color: var(--muted); }
+.hint a { color: var(--accent); }
+.sheet-panel details { border-top: 1px solid var(--line); padding-top: 12px; }
+.sheet-panel details .field { margin-top: 10px; }
+header h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+header p { margin: 6px 0 0; color: var(--muted); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.card h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.chip {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+/* buttons */
+.btn {
+  appearance: none;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 11px 16px;
+  min-height: 44px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.danger { color: var(--bad); }
+.btn[disabled] { opacity: 0.5; cursor: default; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 10px; }
+input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+/* input card */
+.drop { display: flex; gap: 14px; align-items: center; }
+.drop.over { outline: 2px dashed var(--accent); outline-offset: 6px; }
+.thumb {
+  flex: none;
+  width: 84px;
+  height: 84px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+.thumb[hidden] { display: none; }
+.drop-text { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.status { margin: 0; color: var(--muted); font-size: 15px; }
+.status.err { color: var(--bad); font-weight: 600; }
+.status b { color: var(--ink); }
+.reading { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.spin {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 3px solid var(--line); border-top-color: var(--accent);
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.opt { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
+.opt input { width: 18px; height: 18px; accent-color: var(--accent); }
+.row-split {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  border-top: 1px solid var(--line); padding-top: 14px;
+}
+.okey-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.okey-info small { display: block; color: var(--muted); font-size: 13px; }
+.okey-info strong { display: block; font-size: 15px; }
+
+/* tiles */
+.tile {
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 52px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #fbf6e8 0%, var(--tile) 100%);
+  box-shadow: 0 2px 0 var(--tile-edge), 0 3px 5px rgba(0, 0, 0, 0.18);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--t-black);
+  font-family: var(--font-display);
+}
+button.tile { cursor: pointer; }
+button.tile:hover { transform: translateY(-1px); }
+.tile .num { font-weight: 800; font-size: 29px; line-height: 0.95; font-variant-numeric: tabular-nums; }
+.tile .ring { width: 8px; height: 8px; border-radius: 50%; border: 2px solid currentColor; }
+.c-red { color: var(--t-red); }
+.c-yellow { color: var(--t-yellow); }
+.c-blue { color: var(--t-blue); }
+.c-black { color: var(--t-black); }
+.tile.fake { color: #1f6b4a; }
+.tile.fake svg { width: 24px; height: 24px; fill: currentColor; }
+.tile.wild::after, .tile.slot::after {
+  content: "\2605";
+  position: absolute; top: 1px; right: 3px;
+  font-family: var(--font-body);
+  font-size: 11px; line-height: 1;
+  color: #a06b00;
+}
+.tile.unsure::before {
+  content: "";
+  position: absolute; top: 3px; left: 3px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #e07b00;
+  box-shadow: 0 0 0 2px #fbf6e8;
+}
+.tile.mini { width: 28px; height: 38px; border-radius: 6px; gap: 1px; box-shadow: 0 1.5px 0 var(--tile-edge); }
+.tile.mini .num { font-size: 21px; }
+.tile.mini .ring { width: 6px; height: 6px; border-width: 1.5px; }
+.tile.mini.slot { outline: 2px dashed #b9852a; outline-offset: -3px; }
+.tile.mini.slot::after { font-size: 9px; top: 1px; right: 2px; }
+.tile.mini.dim { opacity: 0.55; }
+
+/* result */
+.res-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.score { display: flex; align-items: baseline; gap: 8px; }
+.score .big {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 84px;
+  line-height: 0.85;
+  font-variant-numeric: tabular-nums;
+}
+.score .unit { color: var(--muted); font-weight: 600; }
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 999px;
+  font-weight: 700; font-size: 14px;
+  border: 1.5px solid currentColor;
+}
+.pill.good { color: var(--good); }
+.pill.warn { color: var(--warn); }
+.meter { position: relative; height: 12px; border-radius: 999px; background: var(--surface-2); }
+.meter .fill { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--warn); }
+.meter.open .fill { background: var(--good); }
+.meter-scale { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
+.pairs { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.pairs .lab { font-weight: 600; }
+.pairs .lab small { display: block; font-weight: 400; color: var(--muted); font-size: 13px; }
+.dots { display: flex; gap: 6px; align-items: center; }
+.dots i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--muted); }
+.dots i.on { background: var(--warn); border-color: var(--warn); }
+.dots.open i.on { background: var(--good); border-color: var(--good); }
+.dots b { margin-left: 6px; font-family: var(--font-display); font-size: 24px; font-variant-numeric: tabular-nums; }
+.melds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.meld { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.meld:first-child { border-top: 0; }
+.meld-tiles { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+.meld-side { display: flex; flex-direction: column; align-items: flex-end; flex: none; }
+.meld-side b { font-family: var(--font-display); font-size: 26px; line-height: 1; font-variant-numeric: tabular-nums; }
+.meld-side span { font-size: 12px; color: var(--muted); }
+.meld.left .meld-side b { color: var(--muted); }
+.pair-list { display: flex; flex-wrap: wrap; gap: 8px 12px; padding-top: 10px; }
+.pair-list span { display: inline-flex; gap: 2px; }
+details > summary { cursor: pointer; font-weight: 600; color: var(--muted); font-size: 14px; }
+.notes { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.notes li { font-size: 14px; padding: 8px 10px; border-radius: 8px; background: var(--surface-2); border-left: 4px solid var(--warn); }
+
+/* hand */
+.rack {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 14px 12px;
+  border-radius: 10px;
+  background: #6a4a2f;
+  background-image: linear-gradient(180deg, #7a5736, #5e4129);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.rack-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.rack .empty { margin: 0; color: #f0e6d2; font-size: 14px; }
+.legend { margin: 0; font-size: 13px; color: var(--muted); }
+
+/* sheet */
+.sheet { position: fixed; inset: 0; z-index: 20; display: flex; align-items: flex-end; justify-content: center; background: rgba(5, 12, 8, 0.55); }
+.sheet[hidden] { display: none; }
+.sheet-panel {
+  width: 100%; max-width: 560px; max-height: 90%; overflow: auto;
+  background: var(--surface);
+  border-radius: 18px 18px 0 0;
+  padding: 18px 16px calc(16px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 14px;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3);
+}
+.sheet-panel h3 { margin: 0; font-size: 18px; }
+.sheet-panel p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+.colors { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.colors button {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 10px 4px; min-height: 64px;
+  border: 2px solid var(--line); border-radius: 10px; background: var(--surface); cursor: pointer;
+  font-size: 13px; font-weight: 600;
+}
+.colors button[aria-pressed="true"] { border-color: var(--accent); background: var(--surface-2); }
+.colors i { width: 22px; height: 22px; border-radius: 50%; display: block; border: 2px solid rgba(0, 0, 0, 0.25); }
+.sw-red { background: var(--t-red); }
+.sw-yellow { background: #f0b400; }
+.sw-blue { background: var(--t-blue); }
+.sw-black { background: var(--t-black); }
+.nums { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+.nums button {
+  min-height: 48px; border: 2px solid var(--line); border-radius: 10px; background: var(--surface); cursor: pointer;
+  font-family: var(--font-display); font-weight: 800; font-size: 24px;
+}
+.nums button[aria-pressed="true"] { border-color: var(--accent); background: var(--surface-2); }
+.nums.c-red button { color: var(--t-red); }
+.nums.c-yellow button { color: var(--t-yellow); }
+.nums.c-blue button { color: var(--t-blue); }
+.nums.c-black button { color: var(--ink); }
+
+.rules { font-size: 14px; color: var(--muted); }
+.rules ul { margin: 8px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .spin { animation: none; border-top-color: var(--line); border-right-color: var(--accent); }
+  button.tile:hover { transform: none; }
+}
+@media (max-width: 380px) {
+  .score .big { font-size: 68px; }
+  .drop { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="top">
+    <div>
+      <h1>Okey Zähler</h1>
+      <p>Foto vom Ständer machen, Claude liest die Steine, der Rechner findet die höchste Summe für 101-Okey.</p>
+    </div>
+    <button class="gear" type="button" id="gearBtn" aria-label="Einstellungen">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </header>
+
+  <section class="card" id="input" aria-label="Foto und Anzeigestein">
+    <div class="drop" id="drop">
+      <img class="thumb" id="thumb" alt="Hochgeladenes Foto des Ständers" hidden>
+      <div class="drop-text">
+        <div id="status" aria-live="polite"></div>
+        <div class="btn-row">
+          <label class="btn" for="file" id="pickLabel" role="button" tabindex="0">Foto aufnehmen oder wählen</label>
+          <button class="btn" type="button" id="reread" hidden>Neu lesen</button>
+        </div>
+        <input type="file" id="file" accept="image/*">
+        <label class="opt" for="precise"><input type="checkbox" id="precise"> Genauer lesen (dauert länger)</label>
+      </div>
+    </div>
+    <div class="row-split">
+      <div class="okey-info" id="okeyInfo"></div>
+      <button class="btn" type="button" id="indBtn">Anzeigestein</button>
+    </div>
+  </section>
+
+  <section class="card" id="result" aria-label="Ergebnis"></section>
+
+  <section class="card" aria-label="Dein Blatt">
+    <div class="card-head">
+      <h2>Dein Blatt</h2>
+      <span class="chip" id="handCount"></span>
+    </div>
+    <div class="rack" id="rack"></div>
+    <p class="legend">Stein antippen, um Farbe oder Zahl zu ändern. Orange Punkt: Claude war unsicher. Stern: Okey-Joker.</p>
+    <div class="btn-row">
+      <button class="btn" type="button" id="addBtn">Stein hinzufügen</button>
+      <button class="btn danger" type="button" id="clearBtn">Blatt leeren</button>
+    </div>
+  </section>
+
+  <details class="rules">
+    <summary>Rechenregeln</summary>
+    <ul>
+      <li>Reihe: mindestens 3 Steine einer Farbe in Folge. 12-13-1 gilt, 13-1-2 nicht. Die 1 zählt 1 Punkt.</li>
+      <li>Satz: 3 oder 4 Steine gleicher Zahl in verschiedenen Farben.</li>
+      <li>Joker: der Okey-Stein ersetzt jeden Stein und zählt dessen Wert. Der falsche Joker zählt als Stein mit dem Okey-Aufdruck.</li>
+      <li>Öffnen: ab 101 Punkten oder mit 5 Paaren. Ein Joker kann ein Paar vervollständigen.</li>
+      <li>Der Rechner prüft alle Anordnungen und zeigt die höchste Summe, keine Schätzung.</li>
+    </ul>
+  </details>
+</main>
+
+<div class="sheet" id="sheet" hidden></div>
+<div class="sheet" id="settings" hidden></div>
+
+<script>
+(function () {
+'use strict';
+/* Okey 101 solver: maximum meld sum, pairs hand.
+   Tiles: {color:'red'|'yellow'|'blue'|'black', n:1..13} or {fake:true}.
+   Indicator (Anzeigestein): {color, n}. The joker (Okey) is the same colour, n+1 (13 -> 1).
+   Real Okey tiles are wildcards; the fake joker is an ordinary tile showing the Okey face. */
+const COLORS = ['red', 'yellow', 'blue', 'black'];
+const COLOR_INDEX = { red: 0, yellow: 1, blue: 2, black: 3 };
+const cellIndex = (c, n) => c * 13 + (n - 1);
+
+/* All possible melds, indexed by every cell they contain.
+   Runs use positions 1..14 where position 14 is the 1 after the 13 (12-13-1 is allowed, 13-1-2 is not). */
+const TEMPLATES_BY_CELL = (function () {
+  const byCell = Array.from({ length: 52 }, () => []);
+  const add = (cells, kind, vals) => {
+    const t = { kind, cells, vals, points: vals.reduce((a, b) => a + b, 0) };
+    for (const c of cells) byCell[c].push(t);
+  };
+  for (let c = 0; c < 4; c++) {
+    for (let s = 1; s <= 12; s++) {
+      for (let e = s + 2; e <= 14; e++) {
+        if (e - s + 1 > 13) continue;
+        const cells = [], vals = [];
+        for (let p = s; p <= e; p++) {
+          const n = p === 14 ? 1 : p;
+          cells.push(cellIndex(c, n));
+          vals.push(n);
+        }
+        add(cells, 'run', vals);
+      }
+    }
+  }
+  for (let n = 1; n <= 13; n++) {
+    for (let mask = 0; mask < 16; mask++) {
+      const cols = [];
+      for (let c = 0; c < 4; c++) if (mask & (1 << c)) cols.push(c);
+      if (cols.length < 3) continue;
+      add(cols.map((c) => cellIndex(c, n)), 'group', cols.map(() => n));
+    }
+  }
+  return byCell;
+})();
+
+function solveMelds(counts, jokers) {
+  const state = counts.slice();
+  const memo = new Map();
+  const keyOf = (j) => {
+    let k = String.fromCharCode(48 + j);
+    for (let i = 0; i < 52; i++) k += String.fromCharCode(48 + state[i]);
+    return k;
+  };
+  const firstCell = () => {
+    for (let i = 0; i < 52; i++) if (state[i] > 0) return i;
+    return -1;
+  };
+  function best(j) {
+    const i = firstCell();
+    if (i < 0) return 0;
+    const k = keyOf(j);
+    const hit = memo.get(k);
+    if (hit) return hit.score;
+    state[i]--;
+    let bestScore = best(j);
+    let choice = { skip: true };
+    state[i]++;
+    for (const t of TEMPLATES_BY_CELL[i]) {
+      let need = 0;
+      for (const c of t.cells) if (state[c] === 0) need++;
+      if (need > j) continue;
+      const missing = [];
+      for (const c of t.cells) {
+        if (state[c] > 0) state[c]--;
+        else missing.push(c);
+      }
+      const sc = t.points + best(j - need);
+      for (const c of t.cells) if (!missing.includes(c)) state[c]++;
+      if (sc > bestScore) {
+        bestScore = sc;
+        choice = { tpl: t, missing };
+      }
+    }
+    memo.set(k, { score: bestScore, choice });
+    return bestScore;
+  }
+  const total = best(jokers);
+  // rebuild the arrangement
+  const melds = [];
+  const leftover = [];
+  let j = jokers;
+  for (;;) {
+    const i = firstCell();
+    if (i < 0) break;
+    const { choice } = memo.get(keyOf(j));
+    if (choice.skip) {
+      leftover.push({ color: COLORS[Math.floor(i / 13)], n: (i % 13) + 1 });
+      state[i]--;
+      continue;
+    }
+    const t = choice.tpl;
+    const tiles = t.cells.map((c, idx) => {
+      const isJoker = choice.missing.includes(c);
+      if (!isJoker) state[c]--;
+      return { color: COLORS[Math.floor(c / 13)], n: t.vals[idx], joker: isJoker };
+    });
+    j -= choice.missing.length;
+    melds.push({ kind: t.kind, points: t.points, tiles });
+  }
+  return { total, melds, leftover, leftoverJokers: j };
+}
+
+function pairsHand(counts, jokers) {
+  const pairs = [];
+  const singles = [];
+  counts.forEach((cnt, i) => {
+    const tile = { color: COLORS[Math.floor(i / 13)], n: (i % 13) + 1 };
+    for (let k = 0; k < Math.floor(cnt / 2); k++) pairs.push([tile, tile]);
+    if (cnt % 2) singles.push(tile);
+  });
+  let j = jokers;
+  while (j > 0 && singles.length) {
+    pairs.push([singles.shift(), { joker: true }]);
+    j--;
+  }
+  while (j >= 2) {
+    pairs.push([{ joker: true }, { joker: true }]);
+    j -= 2;
+  }
+  return { count: pairs.length, pairs, leftover: singles, leftoverJokers: j };
+}
+
+function analyse(tiles, indicator) {
+  const counts = new Array(52).fill(0);
+  let jokers = 0;
+  let unresolvedFakes = 0;
+  let okey = null;
+  if (indicator) okey = { color: indicator.color, n: indicator.n === 13 ? 1 : indicator.n + 1 };
+  for (const t of tiles) {
+    if (t.fake) {
+      if (okey) counts[cellIndex(COLOR_INDEX[okey.color], okey.n)]++;
+      else unresolvedFakes++;
+      continue;
+    }
+    if (okey && t.color === okey.color && t.n === okey.n) jokers++;
+    else counts[cellIndex(COLOR_INDEX[t.color], t.n)]++;
+  }
+  const melds = solveMelds(counts, jokers);
+  const pairs = pairsHand(counts, jokers);
+  return { okey, jokers, unresolvedFakes, tileCount: tiles.length, ...melds, pairsHand: pairs };
+}
+
+
+var $ = function (s, r) { return (r || document).querySelector(s); };
+var COLOR_NAME = { red: 'Rot', yellow: 'Gelb', blue: 'Blau', black: 'Schwarz' };
+var FAKE_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.8L5.7 21l1.7-7L2 9.2l7.1-.6z"/></svg>';
+
+var uid = 0;
+function mkTile(color, n, extra) { return Object.assign({ id: ++uid, color: color, n: n }, extra || {}); }
+function mkFake(extra) { return Object.assign({ id: ++uid, fake: true }, extra || {}); }
+
+var state = {
+  rows: [],
+  indicator: null,
+  example: true,
+  reading: false,
+  elapsed: 0,
+  message: null,
+  lastBlob: null,
+  ctl: null
+};
+var sheet = null;
+var timer = null;
+
+/* ---------- local storage (settings and last hand stay on this device) ---------- */
+var DEFAULT_CFG = { key: '', model: 'claude-sonnet-5-5', modelPrecise: 'claude-opus-5-5', precise: false };
+function store(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} return null; }
+var cfg = Object.assign({}, DEFAULT_CFG, store('okey-cfg') || {});
+function saveCfg() { store('okey-cfg', cfg); }
+function saveHand() { store('okey-hand', { rows: state.rows, indicator: state.indicator, example: state.example }); }
+function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+function loadExample() {
+  state.rows = [
+    [mkTile('red', 3), mkTile('red', 4), mkTile('red', 5), mkTile('red', 6), mkTile('yellow', 9), mkTile('blue', 9), mkTile('black', 9), mkTile('blue', 10), mkTile('blue', 11), mkTile('blue', 12), mkTile('red', 13)],
+    [mkTile('yellow', 13), mkTile('black', 13), mkTile('blue', 8), mkFake(), mkTile('yellow', 2)]
+  ];
+  state.indicator = { color: 'blue', n: 7 };
+  state.example = true;
+}
+
+function allTiles() { return [].concat.apply([], state.rows); }
+function okeyOf(ind) { return ind ? { color: ind.color, n: ind.n === 13 ? 1 : ind.n + 1 } : null; }
+function findTile(id) { var all = allTiles(); for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i]; return null; }
+function pruneRows() { state.rows = state.rows.filter(function (r) { return r.length; }); }
+
+/* ---------- rendering ---------- */
+function rackTile(t, okey) {
+  var unsure = t.unsure ? ' unsure' : '';
+  if (t.fake) {
+    return '<button type="button" class="tile fake' + unsure + '" data-id="' + t.id + '" aria-label="Falscher Joker' + (t.unsure ? ', unsicher' : '') + ', ändern">' + FAKE_SVG + '</button>';
+  }
+  var wild = okey && t.color === okey.color && t.n === okey.n;
+  return '<button type="button" class="tile c-' + t.color + (wild ? ' wild' : '') + unsure + '" data-id="' + t.id + '" aria-label="' + COLOR_NAME[t.color] + ' ' + t.n + (wild ? ', Joker' : '') + (t.unsure ? ', unsicher' : '') + ', ändern"><span class="num">' + t.n + '</span><i class="ring"></i></button>';
+}
+function miniTile(t, extra) {
+  if (t.joker && t.n == null) return '<span class="tile mini slot" role="img" aria-label="Joker"><span class="num">★</span></span>';
+  return '<span class="tile mini c-' + t.color + (t.joker ? ' slot' : '') + (extra ? ' ' + extra : '') + '" role="img" aria-label="' + COLOR_NAME[t.color] + ' ' + t.n + (t.joker ? ' (Joker)' : '') + '"><span class="num">' + t.n + '</span><i class="ring"></i></span>';
+}
+
+function renderHand() {
+  var okey = okeyOf(state.indicator);
+  var html = state.rows.map(function (r) {
+    return '<div class="rack-row">' + r.map(function (t) { return rackTile(t, okey); }).join('') + '</div>';
+  }).join('');
+  $('#rack').innerHTML = html || '<p class="empty">Noch keine Steine. Lade ein Foto hoch oder füge Steine von Hand hinzu.</p>';
+  var n = allTiles().length;
+  $('#handCount').textContent = n + (n === 1 ? ' Stein' : ' Steine');
+}
+
+function checkNotes(a) {
+  var notes = [];
+  var seen = {};
+  var fakes = 0;
+  allTiles().forEach(function (t) {
+    if (t.fake) { fakes++; return; }
+    var k = t.color + t.n;
+    seen[k] = (seen[k] || 0) + 1;
+  });
+  Object.keys(seen).forEach(function (k) {
+    if (seen[k] > 2) {
+      var c = k.replace(/\d+$/, ''), n = k.slice(c.length);
+      notes.push(COLOR_NAME[c] + ' ' + n + ' kommt ' + seen[k] + '-mal vor. Im Spiel gibt es jeden Stein nur zweimal. Prüfe die Erkennung.');
+    }
+  });
+  if (fakes > 2) notes.push('Es gibt nur zwei falsche Joker.');
+  if (a.tileCount > 22) notes.push('Mehr als 22 Steine im Blatt. Prüfe, ob Steine doppelt erkannt wurden.');
+  if (!state.indicator) notes.push('Ohne Anzeigestein werden Joker nicht gezählt. Tippe oben auf Anzeigestein.');
+  if (a.unresolvedFakes) notes.push('Der falsche Joker zählt erst, wenn der Anzeigestein gesetzt ist.');
+  return notes;
+}
+
+function renderResult() {
+  var a = analyse(allTiles(), state.indicator);
+  var total = a.total;
+  var open = total >= 101;
+  var pct = Math.min(100, Math.round(total / 101 * 100));
+  var pc = a.pairsHand.count;
+  var html = '';
+  html += '<div class="card-head"><h2>Ergebnis</h2>' + (state.example ? '<span class="chip">Beispielblatt</span>' : '') + '</div>';
+  html += '<div class="res-head"><div class="score"><span class="big">' + total + '</span><span class="unit">Punkte</span></div>' +
+    '<span class="pill ' + (open ? 'good' : 'warn') + '">' + (open ? '✓ Öffnen möglich' : 'Noch ' + (101 - total) + ' bis 101') + '</span></div>';
+  html += '<div><div class="meter' + (open ? ' open' : '') + '" role="img" aria-label="' + total + ' von 101 Punkten"><div class="fill" style="width:' + pct + '%"></div></div>' +
+    '<div class="meter-scale"><span>0</span><span>101</span></div></div>';
+  html += '<div class="pairs"><div class="lab">Paarhand<small>5 Paare zum Öffnen</small></div><div class="dots' + (pc >= 5 ? ' open' : '') + '" role="img" aria-label="' + pc + ' Paare">';
+  for (var i = 0; i < 5; i++) html += '<i class="' + (i < pc ? 'on' : '') + '"></i>';
+  html += '<b>' + pc + '</b></div></div>';
+  if (pc > 0) {
+    html += '<details><summary>Paare anzeigen</summary><div class="pair-list">' + a.pairsHand.pairs.map(function (p) {
+      return '<span>' + p.map(function (t) { return t.joker ? miniTile({ joker: true }) : miniTile({ color: t.color, n: t.n }); }).join('') + '</span>';
+    }).join('') + '</div></details>';
+  }
+  if (a.melds.length) {
+    html += '<ul class="melds" aria-label="Beste Anordnung">' + a.melds.map(function (m) {
+      return '<li class="meld"><div class="meld-tiles">' + m.tiles.map(function (t) { return miniTile(t); }).join('') + '</div>' +
+        '<div class="meld-side"><b>' + m.points + '</b><span>' + (m.kind === 'run' ? 'Reihe' : 'Satz') + '</span></div></li>';
+    }).join('');
+    var left = a.leftover.map(function (t) { return miniTile({ color: t.color, n: t.n }, 'dim'); });
+    for (var j = 0; j < a.leftoverJokers; j++) left.push(miniTile({ joker: true }));
+    if (left.length) html += '<li class="meld left"><div class="meld-tiles">' + left.join('') + '</div><div class="meld-side"><b>0</b><span>übrig</span></div></li>';
+    html += '</ul>';
+  } else if (a.tileCount) {
+    html += '<p class="status">Im Blatt ist keine gültige Reihe und kein Satz.</p>';
+  }
+  var notes = checkNotes(a);
+  if (notes.length) html += '<ul class="notes">' + notes.map(function (n) { return '<li>' + n + '</li>'; }).join('') + '</ul>';
+  $('#result').innerHTML = html;
+}
+
+function renderInput() {
+  var el = $('#status');
+  var html = '';
+  if (state.reading) {
+    html = '<div class="reading"><span class="spin" aria-hidden="true"></span><span>Claude liest die Steine … ' + state.elapsed + ' s</span></div>' +
+      '<div class="btn-row" style="margin-top:10px"><button class="btn" type="button" id="stopBtn">Abbrechen</button></div>';
+  } else if (!cfg.key) {
+    html = '<p class="status"><b>Einmal einrichten:</b> Trage deinen Anthropic-API-Schlüssel ein, damit Claude deine Fotos lesen kann. Von Hand eingeben geht auch ohne.</p>' +
+      '<div class="btn-row" style="margin-top:10px"><button class="btn primary" type="button" id="setupBtn">Schlüssel eintragen</button></div>';
+  } else if (state.message) {
+    html = '<p class="status' + (state.message.kind === 'error' ? ' err' : '') + '" ' + (state.message.kind === 'error' ? 'role="alert"' : '') + '>' + state.message.text + '</p>';
+  } else {
+    html = '<p class="status">Fotografiere deinen Ständer von oben, so dass alle Steine scharf zu sehen sind. Das Beispiel unten zeigt das Ergebnis.</p>';
+  }
+  el.innerHTML = html;
+  var stop = $('#stopBtn');
+  if (stop) stop.onclick = function () { if (state.ctl) state.ctl.abort(); };
+  var setup = $('#setupBtn');
+  if (setup) setup.onclick = function () { openSettings(); };
+  $('#reread').hidden = !state.lastBlob || state.reading;
+  var lab = $('#pickLabel');
+  lab.setAttribute('aria-disabled', state.reading ? 'true' : 'false');
+  lab.classList.toggle('primary', !!cfg.key);
+  lab.style.opacity = state.reading ? '0.5' : '';
+  lab.style.pointerEvents = state.reading ? 'none' : '';
+
+  var ind = state.indicator;
+  var okey = okeyOf(ind);
+  $('#okeyInfo').innerHTML = ind
+    ? miniTile({ color: ind.color, n: ind.n }) + '<div><small>Anzeigestein ' + COLOR_NAME[ind.color] + ' ' + ind.n + '</small><strong>Okey-Joker ist ' + COLOR_NAME[okey.color] + ' ' + okey.n + '</strong></div>'
+    : '<div><small>Anzeigestein</small><strong>Noch nicht gesetzt</strong></div>';
+  $('#indBtn').textContent = ind ? 'Ändern' : 'Setzen';
+}
+
+function renderSheet() {
+  var host = $('#sheet');
+  if (!sheet) { host.hidden = true; host.innerHTML = ''; return; }
+  var focusKey = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.k : null;
+  var s = sheet;
+  var t = s.mode === 'tile' ? findTile(s.id) : null;
+  var title, sub;
+  if (s.mode === 'add') {
+    title = 'Steine hinzufügen';
+    sub = 'Farbe wählen, dann Zahl antippen. ' + allTiles().length + ' Steine im Blatt.';
+  } else if (s.mode === 'indicator') {
+    title = 'Anzeigestein';
+    sub = 'Der Stein, der offen neben dem Stapel liegt. Der Okey-Joker ist derselbe Stein eine Zahl höher.';
+  } else {
+    title = 'Stein ändern';
+    sub = t ? (t.fake ? 'Aktuell: falscher Joker' : 'Aktuell: ' + COLOR_NAME[t.color] + ' ' + t.n) : '';
+  }
+  var curNum = null;
+  if (s.mode === 'tile' && t && !t.fake && t.color === s.color) curNum = t.n;
+  if (s.mode === 'indicator' && state.indicator && state.indicator.color === s.color) curNum = state.indicator.n;
+  var html = '<div class="sheet-panel" role="dialog" aria-modal="true" aria-label="' + title + '">';
+  html += '<div><h3>' + title + '</h3><p>' + sub + '</p></div>';
+  html += '<div class="colors" role="group" aria-label="Farbe">' + ['red', 'yellow', 'blue', 'black'].map(function (c) {
+    return '<button type="button" data-act="color" data-v="' + c + '" data-k="c-' + c + '" aria-pressed="' + (s.color === c) + '"><i class="sw-' + c + '"></i>' + COLOR_NAME[c] + '</button>';
+  }).join('') + '</div>';
+  html += '<div class="nums c-' + s.color + '" role="group" aria-label="Zahl">';
+  for (var n = 1; n <= 13; n++) html += '<button type="button" data-act="num" data-v="' + n + '" data-k="n-' + n + '" aria-pressed="' + (curNum === n) + '">' + n + '</button>';
+  html += '</div><div class="btn-row">';
+  if (s.mode !== 'indicator') html += '<button type="button" class="btn" data-act="fake" data-k="fake">Falscher Joker' + (s.mode === 'add' ? ' hinzufügen' : '') + '</button>';
+  if (s.mode === 'tile') html += '<button type="button" class="btn danger" data-act="remove" data-k="remove">Entfernen</button>';
+  if (s.mode === 'indicator' && state.indicator) html += '<button type="button" class="btn danger" data-act="clearind" data-k="clearind">Anzeigestein entfernen</button>';
+  html += '<button type="button" class="btn primary" data-act="done" data-k="done">Fertig</button></div></div>';
+  host.innerHTML = html;
+  host.hidden = false;
+  var target = focusKey ? host.querySelector('[data-k="' + focusKey + '"]') : null;
+  if (!target) target = host.querySelector('[aria-pressed="true"]') || host.querySelector('[data-act="done"]');
+  if (target) target.focus({ preventScroll: true });
+}
+
+function renderAll() { renderInput(); renderResult(); renderHand(); renderSheet(); saveHand(); }
+
+/* ---------- sheet actions ---------- */
+function openSheet(mode, id) {
+  var color = 'red';
+  if (mode === 'tile') { var t = findTile(id); if (t && !t.fake) color = t.color; }
+  if (mode === 'indicator' && state.indicator) color = state.indicator.color;
+  sheet = { mode: mode, id: id, color: color };
+  renderSheet();
+}
+function closeSheet() {
+  if (sheet && sheet.mode === 'tile') { var t = findTile(sheet.id); if (t) t.unsure = false; }
+  sheet = null;
+  renderAll();
+}
+$('#sheet').addEventListener('click', function (e) {
+  if (e.target === $('#sheet')) { closeSheet(); return; }
+  var b = e.target.closest('[data-act]');
+  if (!b || !sheet) return;
+  var act = b.dataset.act, v = b.dataset.v;
+  var t = sheet.mode === 'tile' ? findTile(sheet.id) : null;
+  if (act === 'color') {
+    sheet.color = v;
+    if (t && !t.fake) { t.color = v; t.unsure = false; renderAll(); } else renderSheet();
+  } else if (act === 'num') {
+    var n = parseInt(v, 10);
+    if (sheet.mode === 'add') {
+      if (!state.rows.length) state.rows.push([]);
+      state.rows[state.rows.length - 1].push(mkTile(sheet.color, n));
+      state.example = false;
+      renderAll();
+    } else if (sheet.mode === 'indicator') {
+      state.indicator = { color: sheet.color, n: n };
+      sheet = null; renderAll();
+    } else if (t) {
+      delete t.fake; t.color = sheet.color; t.n = n; t.unsure = false;
+      sheet = null; renderAll();
+    }
+  } else if (act === 'fake') {
+    if (sheet.mode === 'add') {
+      if (!state.rows.length) state.rows.push([]);
+      state.rows[state.rows.length - 1].push(mkFake());
+      state.example = false;
+      renderAll();
+    } else if (t) {
+      delete t.color; delete t.n; t.fake = true; t.unsure = false;
+      sheet = null; renderAll();
+    }
+  } else if (act === 'remove' && t) {
+    state.rows = state.rows.map(function (r) { return r.filter(function (x) { return x.id !== t.id; }); });
+    pruneRows();
+    sheet = null; renderAll();
+  } else if (act === 'clearind') {
+    state.indicator = null; sheet = null; renderAll();
+  } else if (act === 'done') {
+    closeSheet();
+  }
+});
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && sheet) closeSheet(); });
+
+$('#rack').addEventListener('click', function (e) {
+  var b = e.target.closest('.tile[data-id]');
+  if (b) openSheet('tile', parseInt(b.dataset.id, 10));
+});
+$('#addBtn').addEventListener('click', function () { openSheet('add'); });
+$('#indBtn').addEventListener('click', function () { openSheet('indicator'); });
+$('#clearBtn').addEventListener('click', function () { state.rows = []; state.example = false; renderAll(); });
+
+/* ---------- photo reading ---------- */
+var PROMPT = [
+  'You are reading a photo of a player\'s rack in the Turkish tile game Okey (101 Okey).',
+  'Each tile shows a number from 1 to 13 in one of four colours: red, yellow (it may look orange or gold), blue or black.',
+  'A fake okey tile shows a symbol (a star, clover or ornament) instead of a number. Report it as {"fake": true}.',
+  '',
+  'List every tile of the player\'s own hand, row by row, top row first, each row from left to right. Skip gaps between tiles.',
+  'Ignore anything that is not a tile of the hand, such as tiles lying apart from the rack, the table or the background.',
+  'Look closely at the digits and tell 1 and 7, 3 and 8, 6 and 9, 5 and 6, and blue and black apart carefully.',
+  'Set "unsure": true on every tile where the number or colour is not clearly readable. Never skip a tile you can see: give your best guess and mark it unsure.',
+  '',
+  'Reply with only a JSON object of this shape:',
+  '{"rows":[[{"color":"red","n":5,"unsure":false},{"fake":true,"unsure":false}],[{"color":"blue","n":12,"unsure":true}]],"note":"one short German sentence if the photo is hard to read, otherwise an empty string"}',
+  'color is one of red, yellow, blue, black. n is an integer from 1 to 13. If no tiles are visible, return {"rows":[],"note":"a short German explanation"}.'
+].join('\n');
+
+function errorCopy(e) {
+  var s = e && e.status;
+  var m = (e && e.message) ? String(e.message) : '';
+  if (e && e.code === 'invalid_json') return 'Claude hat keine lesbare Antwort geliefert. Mach ein schärferes Foto von oben, mit dem ganzen Ständer im Bild.';
+  if (e && e.code === 'timeout') return 'Das Lesen hat zu lange gedauert. Tippe auf Neu lesen.';
+  if (e && e.code === 'image') return 'Das Foto lässt sich nicht laden. Wähle ein JPEG oder PNG.';
+  if (s === 401) return 'Der API-Schlüssel wird abgelehnt. Prüfe ihn in den Einstellungen.';
+  if (s === 403) return 'Dieser Schlüssel hat dafür keine Berechtigung. Prüfe ihn in der Anthropic Console.';
+  if (s === 404) return 'Modell nicht gefunden. Prüfe die Modellnamen unter Einstellungen, Erweitert.';
+  if (s === 413) return 'Das Foto ist zu groß. Wähle ein kleineres Foto.';
+  if (s === 400 && /credit|balance|billing/i.test(m)) return 'Dein Guthaben bei Anthropic ist aufgebraucht. Lade es in der Console auf.';
+  if (s === 400) return 'Die Anfrage wurde abgelehnt (' + esc(m.slice(0, 160)) + ').';
+  if (s === 429) return 'Zu viele Anfragen oder dein Limit ist erreicht. Warte kurz und tippe dann auf Neu lesen.';
+  if (s >= 500) return 'Claude ist gerade überlastet. Tippe gleich auf Neu lesen.';
+  return 'Keine Verbindung zu Anthropic. Prüfe dein Netz und tippe auf Neu lesen.';
+}
+
+function loadBitmap(file) {
+  return (async function () {
+    try {
+      return await createImageBitmap(file, { imageOrientation: 'from-image' });
+    } catch (e1) {
+      return await new Promise(function (resolve, reject) {
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+        img.onload = function () { URL.revokeObjectURL(url); resolve(img); };
+        img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('image')); };
+        img.src = url;
+      });
+    }
+  })();
+}
+
+/* Scales the longest side to 1568 px (the size Claude reads best) and returns a JPEG as blob and base64. */
+function prepareImage(file) {
+  return (async function () {
+    var bmp = await loadBitmap(file);
+    var w = bmp.width || bmp.naturalWidth, h = bmp.height || bmp.naturalHeight;
+    var sc = Math.min(1, 1568 / Math.max(w, h));
+    var cv = document.createElement('canvas');
+    cv.width = Math.max(1, Math.round(w * sc));
+    cv.height = Math.max(1, Math.round(h * sc));
+    cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
+    var blob = await new Promise(function (res) { cv.toBlob(res, 'image/jpeg', 0.9); });
+    if (!blob) throw new Error('image');
+    var b64 = await new Promise(function (res, rej) {
+      var r = new FileReader();
+      r.onload = function () { res(String(r.result).split(',')[1]); };
+      r.onerror = function () { rej(new Error('image')); };
+      r.readAsDataURL(blob);
+    });
+    return { blob: blob, b64: b64 };
+  })();
+}
+
+function setThumb(blob) {
+  var img = $('#thumb');
+  if (img.dataset.url) URL.revokeObjectURL(img.dataset.url);
+  var url = URL.createObjectURL(blob);
+  img.dataset.url = url;
+  img.src = url;
+  img.hidden = false;
+}
+
+function parseRows(data) {
+  var rowsIn = Array.isArray(data) ? [data] : (data && Array.isArray(data.rows) ? data.rows : []);
+  var rows = [];
+  rowsIn.forEach(function (r) {
+    if (!Array.isArray(r)) return;
+    var row = [];
+    r.forEach(function (x) {
+      if (!x || typeof x !== 'object') return;
+      if (x.fake === true) { row.push(mkFake({ unsure: !!x.unsure })); return; }
+      var c = String(x.color || '').toLowerCase();
+      var n = Math.round(Number(x.n));
+      if (COLOR_INDEX[c] !== undefined && n >= 1 && n <= 13) row.push(mkTile(c, n, { unsure: !!x.unsure }));
+    });
+    if (row.length) rows.push(row);
+  });
+  return rows;
+}
+
+function extractJson(text) {
+  try { return JSON.parse(text); } catch (e) {}
+  var fence = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fence) { try { return JSON.parse(fence[1]); } catch (e) {} }
+  var a = text.indexOf('{'), b = text.lastIndexOf('}');
+  if (a >= 0 && b > a) { try { return JSON.parse(text.slice(a, b + 1)); } catch (e) {} }
+  throw { code: 'invalid_json' };
+}
+
+async function callClaude(b64, signal) {
+  var res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    signal: signal,
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': cfg.key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: cfg.precise ? cfg.modelPrecise : cfg.model,
+      max_tokens: 2000,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 } },
+          { type: 'text', text: PROMPT }
+        ]
+      }]
+    })
+  });
+  if (!res.ok) {
+    var body = null;
+    try { body = await res.json(); } catch (e) {}
+    throw { status: res.status, message: body && body.error && body.error.message ? body.error.message : '' };
+  }
+  var data = await res.json();
+  var text = (data.content || []).filter(function (b) { return b.type === 'text'; }).map(function (b) { return b.text; }).join('');
+  return extractJson(text);
+}
+
+function startTimer() {
+  state.elapsed = 0;
+  clearInterval(timer);
+  timer = setInterval(function () { state.elapsed++; if (state.reading) renderInput(); }, 1000);
+}
+
+async function readPhoto(file) {
+  if (state.reading) return;
+  if (!cfg.key) { openSettings(); return; }
+  if (file) {
+    try {
+      var prep = await prepareImage(file);
+      state.lastB64 = prep.b64;
+      setThumb(prep.blob);
+    } catch (e) {
+      state.message = { kind: 'error', text: errorCopy({ code: 'image' }) };
+      renderInput(); return;
+    }
+  }
+  if (!state.lastB64) return;
+  state.reading = true; state.message = null; startTimer(); renderInput();
+  var ctl = new AbortController();
+  state.ctl = ctl;
+  var timedOut = false;
+  var to = setTimeout(function () { timedOut = true; ctl.abort(); }, 120000);
+  try {
+    var data = await callClaude(state.lastB64, ctl.signal);
+    var rows = parseRows(data);
+    if (!rows.length) {
+      state.message = { kind: 'error', text: (data && typeof data.note === 'string' && data.note ? esc(data.note) + ' ' : '') + 'Es wurden keine Steine erkannt. Mach ein schärferes Foto von oben.' };
+    } else {
+      state.rows = rows; state.example = false;
+      var all = allTiles();
+      var unsure = all.filter(function (t) { return t.unsure; }).length;
+      var txt = '<b>' + all.length + ' Steine erkannt.</b> ' + (unsure ? unsure + ' unsicher, orange markiert. Tippe sie an und prüfe sie.' : 'Prüfe das Blatt unten kurz gegen dein Foto.');
+      if (data && typeof data.note === 'string' && data.note.trim()) txt += ' ' + esc(data.note);
+      state.message = { kind: 'info', text: txt };
+    }
+  } catch (e) {
+    if (timedOut) state.message = { kind: 'error', text: errorCopy({ code: 'timeout' }) };
+    else if (!(e && e.name === 'AbortError')) state.message = { kind: 'error', text: errorCopy(e) };
+  } finally {
+    clearTimeout(to);
+    state.reading = false; state.ctl = null; clearInterval(timer);
+    renderAll();
+    if (!state.example) { try { $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e2) {} }
+  }
+}
+
+/* ---------- settings ---------- */
+var settingsOpen = false;
+function openSettings() { settingsOpen = true; renderSettings(); }
+function closeSettings() { settingsOpen = false; renderSettings(); renderInput(); }
+function renderSettings() {
+  var host = $('#settings');
+  if (!settingsOpen) { host.hidden = true; host.innerHTML = ''; return; }
+  var masked = cfg.key ? 'Gespeichert, endet auf …' + esc(cfg.key.slice(-4)) : 'Noch kein Schlüssel gespeichert.';
+  host.innerHTML = '<div class="sheet-panel" role="dialog" aria-modal="true" aria-label="Einstellungen">' +
+    '<div><h3>Einstellungen</h3><p>Claude liest deine Fotos über deinen eigenen Anthropic-Zugang.</p></div>' +
+    '<div class="field"><label for="keyInput">API-Schlüssel</label>' +
+    '<input id="keyInput" type="password" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="sk-ant-…">' +
+    '<p class="hint" id="keyState">' + masked + '</p></div>' +
+    '<p class="hint">Der Schlüssel bleibt auf diesem Gerät und wird nur an api.anthropic.com gesendet. Erstelle in der <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Anthropic Console</a> einen eigenen Schlüssel für diese App und setze dort ein Ausgabenlimit. Jedes Foto kostet etwas Guthaben, im Modus Genauer lesen mehr.</p>' +
+    '<details><summary>Erweitert</summary>' +
+    '<div class="field"><label for="modelInput">Modell normal</label><input id="modelInput" type="text" autocapitalize="none" autocorrect="off" spellcheck="false"></div>' +
+    '<div class="field"><label for="modelPreciseInput">Modell genau</label><input id="modelPreciseInput" type="text" autocapitalize="none" autocorrect="off" spellcheck="false"></div>' +
+    '</details>' +
+    '<div class="btn-row"><button type="button" class="btn primary" id="saveCfg">Speichern</button>' +
+    (cfg.key ? '<button type="button" class="btn danger" id="delKey">Schlüssel löschen</button>' : '') +
+    '<button type="button" class="btn" id="closeCfg">Schließen</button></div></div>';
+  $('#modelInput').value = cfg.model;
+  $('#modelPreciseInput').value = cfg.modelPrecise;
+  host.hidden = false;
+  $('#keyInput').focus({ preventScroll: true });
+}
+$('#settings').addEventListener('click', function (e) {
+  if (e.target === $('#settings')) { closeSettings(); return; }
+  var id = e.target.id;
+  if (id === 'closeCfg') closeSettings();
+  else if (id === 'delKey') { cfg.key = ''; saveCfg(); renderSettings(); renderInput(); }
+  else if (id === 'saveCfg') {
+    var k = $('#keyInput').value.trim();
+    if (k && !/^sk-ant-/.test(k)) { $('#keyState').textContent = 'Das sieht nicht wie ein Anthropic-Schlüssel aus. Er beginnt mit sk-ant-.'; return; }
+    if (k) cfg.key = k;
+    cfg.model = $('#modelInput').value.trim() || DEFAULT_CFG.model;
+    cfg.modelPrecise = $('#modelPreciseInput').value.trim() || DEFAULT_CFG.modelPrecise;
+    saveCfg();
+    state.message = null;
+    closeSettings();
+  }
+});
+$('#gearBtn').addEventListener('click', openSettings);
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && settingsOpen) closeSettings(); });
+
+/* ---------- wiring ---------- */
+$('#precise').checked = !!cfg.precise;
+$('#precise').addEventListener('change', function (e) { cfg.precise = e.target.checked; saveCfg(); });
+$('#file').addEventListener('change', function (e) {
+  var f = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (f) readPhoto(f);
+});
+$('#pickLabel').addEventListener('click', function (e) { if (!cfg.key) { e.preventDefault(); openSettings(); } });
+$('#reread').addEventListener('click', function () { readPhoto(null); });
+$('#pickLabel').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!cfg.key) openSettings(); else $('#file').click(); }
+});
+var drop = $('#drop');
+['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
+['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
+drop.addEventListener('drop', function (e) {
+  var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f && /^image\//.test(f.type)) readPhoto(f);
+});
+
+/* ---------- boot ---------- */
+var saved = store('okey-hand');
+if (saved && Array.isArray(saved.rows)) {
+  state.rows = saved.rows; state.indicator = saved.indicator || null; state.example = !!saved.example;
+  uid = allTiles().reduce(function (m, t) { return Math.max(m, t.id || 0); }, 0);
+} else loadExample();
+renderAll();
+})();
+</script>
+</body>
+</html>
